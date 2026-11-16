@@ -1,0 +1,71 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.matbrons/api-screenshot",
+  "title": "API Screenshot",
+  "description": "Clean full-page screenshots of real sites: cookie banners, pop-ups, chat widgets and ads removed.",
+  "version": "0.1.2",
+  "websiteUrl": "https://apiscreenshot.com",
+  "repository": {
+    "url": "https://github.com/matbrons/api-screenshot",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/matbrons/api-screenshot:0.1.2",
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:{PORT}/mcp",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {API_KEY}",
+            "description": "The same API_KEY the container runs with",
+            "isRequired": true,
+            "isSecret": true
+          }
+        ]
+      },
+      "environmentVariables": [
+        {
+          "name": "API_KEY",
+          "description": "Key every request must carry, 16 characters or more. Make one with: openssl rand -hex 32",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "PORT",
+          "description": "Port the API listens on",
+          "default": "3000"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://{host}/mcp",
+      "variables": {
+        "host": {
+          "description": "Where you deployed it, such as api-screenshot.your-subdomain.workers.dev",
+          "isRequired": true
+        }
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {api_key}",
+          "isRequired": true,
+          "isSecret": true,
+          "variables": {
+            "api_key": {
+              "description": "The API_KEY you set when you deployed it",
+              "isRequired": true,
+              "isSecret": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

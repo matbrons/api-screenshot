@@ -1,0 +1,35 @@
+# Real sites for the live tests: a name, the URL, then what the site tests.
+# Used by `npm run live-test` (the engine with a local Chromium) and by
+# `ops/smoke-sites.sh --all` (a running install, such as the Docker image).
+# Sites change, so these run on demand, never in the quick check.
+
+bbc        https://www.bbc.com/news                   UK news, consent banner
+guardian   https://www.theguardian.com/international  UK news, consent manager
+spiegel    https://www.spiegel.de                     German news, consent wall
+lemonde    https://www.lemonde.fr                     French news, consent manager
+nu         https://www.nu.nl                          Dutch news, consent manager
+corriere   https://www.corriere.it                    Italian news, consent wall
+elpais     https://elpais.com                         Spanish news, consent manager
+bol        https://www.bol.com/nl/nl/                 Dutch shop, cookie banner
+zalando    https://www.zalando.de                     German shop, cookie banner
+ikea       https://www.ikea.com/nl/nl/                Shop, consent manager
+cnn        https://edition.cnn.com                    US news, ads
+verge      https://www.theverge.com                   Tech news, long page
+forbes     https://www.forbes.com                     US news, consent and ads
+nytimes    https://www.nytimes.com                    US news, often a bot wall
+stripe     https://stripe.com                         SaaS, animated
+notion     https://www.notion.com                     SaaS, cookie banner
+hubspot    https://www.hubspot.com                    SaaS, consent and chat
+intercom   https://www.intercom.com                   SaaS, chat widget
+shopify    https://www.shopify.com                    SaaS, cookie banner
+allbirds   https://www.allbirds.com                   Shop, newsletter pop-up
+medium     https://medium.com                         Sign-up prompts
+github     https://github.com                         Long animated page
+wikipedia  https://en.wikipedia.org/wiki/Screenshot   Plain article
+booking    https://www.booking.com                    Travel, sign-in pop-up
+youtube    https://www.youtube.com                    Consent wall in the EU
+reddit     https://www.reddit.com                     Often a bot wall
+g2         https://www.g2.com                         Cloudflare challenge
+zillow     https://www.zillow.com                     Press-and-hold bot wall
+amazon     https://www.amazon.com                     Sometimes a captcha
+walmart    https://www.walmart.com                    Press-and-hold bot wall

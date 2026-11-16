@@ -1,0 +1,52 @@
+name: Bug report
+description: A wrong shot, a banner that wasn't removed, a wrong error, or anything else that doesn't work.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Leave your API key, signing secret and proxy logins out of everything below.
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Where it runs
+      options:
+        - Cloudflare Worker
+        - Docker image
+        - Node, without Docker
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release or image tag, or the commit you deployed.
+  - type: input
+    id: url
+    attributes:
+      label: The page you shot
+      placeholder: https://example.com
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: The request
+      description: The options you sent, as a query string or a JSON body.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: headers
+    attributes:
+      label: The response headers
+      description: For example from `curl -D - -o shot.png ...`. On an error, the JSON body too.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: A shot helps, if you can share it.
+    validations:
+      required: true

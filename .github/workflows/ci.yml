@@ -1,0 +1,119 @@
+# Proves both ways of running it work, on every push and pull request:
+#   test    typecheck, unit tests and real-browser tests on Node 22 and 24,
+#           and the Cloudflare Worker bundle builds
+#   docker  the Docker image builds, starts, refuses requests until a key is set,
+#           and takes a real screenshot of a public page; then a few real sites
+#
+# Run it by hand (Actions > CI > Run workflow) with "sites: all" to put the whole
+# list in ops/live-sites.txt through the Docker image, the same set
+# `npm run live-test` runs on the engine. That takes up to an hour.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: Real sites to shoot through the Docker image
+        type: choice
+        options: [quick, all]
+        default: quick
+
+# Nothing by default; each job asks for what it needs.
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Use the runner's Chrome, so the browser tests run instead of skipping
+        run: |
+          chrome="$(command -v google-chrome || command -v chromium || true)"
+          test -n "$chrome" || { echo "No Chrome on this runner"; exit 1; }
+          echo "CHROME_PATH=$chrome" >> "$GITHUB_ENV"
+      - run: npm test
+      - name: Build the Cloudflare Worker bundle
+        run: npm run build:worker
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: ${{ inputs.sites == 'all' && 75 || 25 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: api-screenshot:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Refuses screenshots when no key is set
+        run: |
+          docker run -d --name nokey -p 3001:3000 api-screenshot:ci
+          trap 'docker logs nokey; docker rm -f nokey' EXIT
+          for _ in $(seq 1 90); do curl -sf http://127.0.0.1:3001/health && break; sleep 1; done
+          code=$(curl -s -o body.json -w '%{http_code}' "http://127.0.0.1:3001/screenshot?url=https://example.com")
+          cat body.json; echo
+          test "$code" = 503 && grep -q '"not_configured"' body.json
+
+      - name: Start with a key
+        run: |
+          key="$(openssl rand -hex 24)"
+          echo "::add-mask::$key"
+          echo "APISHOT_TEST_KEY=$key" >> "$GITHUB_ENV"
+          docker run -d --name shot -p 3000:3000 -e API_KEY="$key" api-screenshot:ci
+          for _ in $(seq 1 90); do curl -sf http://127.0.0.1:3000/health && break; sleep 1; done
+
+      - name: Takes a real screenshot
+        env:
+          APISHOT_TEST_URL: http://127.0.0.1:3000
+        run: ops/watch.sh
+
+      - name: Real sites
+        env:
+          APISHOT_TEST_URL: http://127.0.0.1:3000
+        run: |
+          ops/smoke-sites.sh ${{ inputs.sites == 'all' && '--all' || '' }} shots
+          { echo "### Real sites through the Docker image"; echo; cat shots/report.md; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the shots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots
+          path: shots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Container log
+        if: always()
+        run: docker logs shot || true

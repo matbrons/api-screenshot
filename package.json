@@ -1,0 +1,52 @@
+{
+  "name": "api-screenshot",
+  "version": "0.1.2",
+  "private": true,
+  "description": "Self-hosted screenshot API: clean, full-page shots with cookie banners, pop-ups and chat widgets removed.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "postinstall": "node scripts/consent-script.mjs && node scripts/blocklists.ts --if-missing",
+    "start": "node src/server.ts",
+    "dev:worker": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "live-test": "node scripts/live-test.ts",
+    "build:worker": "wrangler deploy --dry-run --outdir dist"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^2.0.0",
+    "@duckduckgo/autoconsent": "^18.5.0",
+    "@ghostery/adblocker": "^2.20.3",
+    "@hono/node-server": "^2.1.8",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "hono": "^4.13.18",
+    "puppeteer-core": "^25.17.0",
+    "undici": "^8.12.4"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@types/node": "^26.6.6",
+    "esbuild": "0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.162.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "API_KEY": {
+        "description": "The key every request must carry, 16 characters or more. Make one with `openssl rand -hex 32` and keep it somewhere safe. Until you set your own, the API refuses all screenshots."
+      },
+      "CACHE": {
+        "description": "Workers KV, where finished shots are kept for a day so the same request again costs no browser time. The free plan includes 1,000 writes and 100,000 reads a day."
+      },
+      "BROWSER": {
+        "description": "[Browser Rendering](https://developers.cloudflare.com/browser-rendering/), the headless browser that takes the shots. The free plan includes 10 browser minutes a day."
+      }
+    }
+  }
+}
