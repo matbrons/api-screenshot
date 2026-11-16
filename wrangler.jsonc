@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-screenshot",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Browser Rendering. Included in the free plan with a daily limit; see the README.
+  "browser": { "binding": "BROWSER" },
+  // Served on <name>.<your-subdomain>.workers.dev. The API_KEY secret guards it.
+  "workers_dev": true,
+  "preview_urls": false,
+  // Functions passed to page.evaluate run in the browser as written; renamed helpers would break them.
+  "keep_names": false,
+  // Writes autoconsent's in-page script and the day's filter lists into src/generated/.
+  "build": { "command": "node scripts/consent-script.mjs && node scripts/blocklists.ts" },
+  "observability": { "enabled": true },
+  // Finished shots, so a repeat request costs no browser time. Deploying creates the
+  // namespace for you (Workers KV is on the free plan). Remove it to turn the cache off.
+  "kv_namespaces": [{ "binding": "CACHE" }],
+  // API_KEY is a secret, not a variable: npx wrangler secret put API_KEY
+  // Without it, screenshots are refused unless ALLOW_PUBLIC_ACCESS is "true".
+  // SIGNING_SECRET, for signed URLs, is a secret too: npx wrangler secret put SIGNING_SECRET
+  "vars": {
+    "MAX_TIMEOUT_SECONDS": "60",
+    "MAX_FULL_PAGE_HEIGHT": "20000",
+    // 0 closes each browser after its shot, so no browser time is spent idle.
+    // 60 to 600 keeps it open that long for the next shot: faster, but idle time counts.
+    "BROWSER_KEEP_ALIVE_SECONDS": "0",
+    // How long a shot is reused for the same request. 0 turns the cache off.
+    "CACHE_TTL_SECONDS": "86400"
+  }
+}

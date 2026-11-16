@@ -1,0 +1,11 @@
+node_modules
+.git
+.wrangler
+.dev.vars
+shots
+test
+scripts
+*.log
+ops
+.github
+dist
